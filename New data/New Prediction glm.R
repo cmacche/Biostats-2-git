@@ -116,7 +116,12 @@ chisq.test(Post$Tot, Temp1)
 
 cor.test(Post$Tot, Temp1)
 
+hi
+
 hello
+
+meep
+
 
 
 
