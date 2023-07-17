@@ -112,15 +112,12 @@ summary(wq.glm14)#Dissolved oxygen is not significant in this case#
 
 Temp1 = predict(object = wq.glm13)
 
-chisq.test(Post$Tot, Temp1)
+chisq.test(Post$Tot, Temp1)#The issue with both tests is that,
+#data need to be the same length and they aren't so I'm not sure what exactly
+#To do with that thoughts#
 
 cor.test(Post$Tot, Temp1)
 
-hi
-
-hello
-
-meep
 
 
 
