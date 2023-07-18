@@ -1,4 +1,8 @@
+
+install.packages("MuMIn")
+
 library(MASS)
+library(MuMIn)
 
 WaterQuality = read.csv("Water quality 2.csv")
 Macroinvertebrate = read.csv("Macroinvertebrate2.csv")
@@ -58,59 +62,10 @@ Pre = MWQ %>% filter(Date <= '2005-07-25')
 #After#
 Post = MWQ %>% filter(Date > '2005-07-25')
 
-wq.glm1 = glm.nb(Tot ~ pH_SU, data = Pre)#10#
-wq.glm2 = glm.nb(Tot ~ pH_SU + Sp_Cond, data = Pre)#13#
-wq.glm3 = glm.nb(Tot ~ pH_SU + Sp_Cond + Temp.C, data = Pre)#3#
-wq.glm4 = glm.nb(Tot ~ pH_SU + Sp_Cond + Diss_Oxy, data = Pre)#15#
-wq.glm5 = glm.nb(Tot ~ pH_SU + Temp.C + Diss_Oxy, data = Pre)#8#
-wq.glm6 = glm.nb(Tot ~ pH_SU + Temp.C, data = Pre)#4#
-wq.glm7 = glm.nb(Tot ~ pH_SU + Diss_Oxy, data = Pre)#12#
-wq.glm8 = glm.nb(Tot ~ pH_SU + Sp_Cond + Temp.C + Diss_Oxy, data = Pre)#7#
-wq.glm9 = glm.nb(Tot ~ Sp_Cond, data = Pre)#11#
-wq.glm10 = glm.nb(Tot ~ Sp_Cond + Temp.C, data = Pre) #2#
-wq.glm11 = glm.nb(Tot ~ Sp_Cond + Diss_Oxy, data = Pre)#14#
-wq.glm12 = glm.nb(Tot ~ Sp_Cond + Temp.C + Diss_Oxy, data = Pre)#6#
-wq.glm13 = glm.nb(Tot ~ Temp.C, data = Pre) #1#
-wq.glm14 = glm.nb(Tot ~ Temp.C + Diss_Oxy, data = Pre)#5#
-wq.glm15 = glm.nb(Tot ~ Diss_Oxy, data = Pre)#9#
+Temperature = glm.nb(Tot ~ Temp.C, data = Pre)
 
-summary(wq.glm1)
-summary(wq.glm2)
-summary(wq.glm3)
-summary(wq.glm4)
-summary(wq.glm5)
-summary(wq.glm6)
-summary(wq.glm7)
-summary(wq.glm8)
-summary(wq.glm9)
-summary(wq.glm10)
-summary(wq.glm11)
-summary(wq.glm12)
-summary(wq.glm13)
-summary(wq.glm14)
-summary(wq.glm15)
 
-best.mod = AIC(wq.glm1,wq.glm2,wq.glm3,wq.glm4,
-    wq.glm5,wq.glm6,wq.glm7,
-    wq.glm8,wq.glm9,wq.glm10,
-    wq.glm11,wq.glm12,wq.glm13,
-    wq.glm14,wq.glm15)
-
-#top 5 model#
-wq.glm13 = glm.nb(Tot ~ Temp.C, data = Pre)
-wq.glm10 = glm.nb(Tot ~ Sp_Cond + Temp.C, data = Pre)
-wq.glm3 = glm.nb(Tot ~ pH_SU + Sp_Cond + Temp.C, data = Pre)
-wq.glm6 = glm.nb(Tot ~ pH_SU + Temp.C, data = Pre)
-wq.glm14 = glm.nb(Tot ~ Temp.C + Diss_Oxy, data = Pre)
-#most of these models have Temperature involved
-
-summary(wq.glm13) #intercept and Temp are significant in the model#
-summary(wq.glm10)#Specific conductivity is not significant#
-summary(wq.glm3)#Specific conductivity and pH are not significant in this case#
-summary(wq.glm6)#pH is not significant in this case#
-summary(wq.glm14)#Dissolved oxygen is not significant in this case#
-
-Temp1 = predict(object = wq.glm13)
+Temp1 = predict(object = Temperature)
 
 chisq.test(Post$Tot, Temp1)#The issue with both tests is that,
 #data need to be the same length and they aren't so I'm not sure what exactly
@@ -120,5 +75,17 @@ cor.test(Post$Tot, Temp1)
 
 
 
+# dredge package ----------------------------------------------------------
 
 
+wq.glm = glm.nb(Tot~ ., data = Pre, na.action = "na.fail" )
+
+wq = dredge(wq.glm) # this seems to be taking a long time to run
+#going to try a different way#
+
+Pre1 = subset(Pre, select = c("Tot", "pH_SU", "Sp_Cond","Temp.C","Diss_Oxy"))
+wq.glm1 = glm.nb(Tot~ ., data = Pre1, na.action = "na.fail" )
+
+wq1 = dredge(wq.glm1)
+wq1
+#from the above model Temp.C alone is the best but it may change if I use the other one#
