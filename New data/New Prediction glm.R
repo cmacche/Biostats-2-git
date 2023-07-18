@@ -74,7 +74,6 @@ chisq.test(Post$Tot, Temp1)#The issue with both tests is that,
 
 cor.test(Post$Tot, Temp1, use = "eveything")
 
-cor(Post$Tot, Temp1, na.rm = TRUE)
 
 # dredge package ----------------------------------------------------------
 
