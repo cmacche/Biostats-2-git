@@ -61,6 +61,7 @@ summary(MWQ)
 Pre = MWQ %>% filter(Date <= '2005-07-25')
 #After#
 Post = MWQ %>% filter(Date > '2005-07-25')
+Post [ nrow(Post) +  7, ] <- NA # adding this so I can run the correlation test#
 
 Temperature = glm.nb(Tot ~ Temp.C, data = Pre)
 
@@ -71,9 +72,9 @@ chisq.test(Post$Tot, Temp1)#The issue with both tests is that,
 #data need to be the same length and they aren't so I'm not sure what exactly
 #To do with that thoughts#
 
-cor.test(Post$Tot, Temp1)
+cor.test(Post$Tot, Temp1, use = "eveything")
 
-
+cor(Post$Tot, Temp1, na.rm = TRUE)
 
 # dredge package ----------------------------------------------------------
 
@@ -88,4 +89,5 @@ wq.glm1 = glm.nb(Tot~ ., data = Pre1, na.action = "na.fail" )
 
 wq1 = dredge(wq.glm1)
 wq1
-#from the above model Temp.C alone is the best but it may change if I use the other one#
+#from the above model Temp.C alone is the best but it may change if ,
+#I use the other one#
