@@ -60,13 +60,24 @@ MWQ = MWQ %>% relocate(Drainage, .before = Tot)
 
 MWQ$Tot <- as.numeric(MWQ$Tot)
 
-summary(MWQ)
+summary(MWQ) #this is to find the median so I can split the data as evenly as,
+#possible to create a test model.
 
 Pre = MWQ %>% filter(Date <= '2005-07-12')
-#After#
+
 Post = MWQ %>% filter(Date > '2005-07-12')
-Post[Tot:Temp.C] <- lapply(Post[Tot:Temp.C], as.numeric)
-Post [ nrow(Post) +  7, ] <- NA # adding this so I can run the correlation test#
+
+wq.glm = glm.nb(Tot~ ., data = Pre, na.action = "na.fail" )
+
+wq = dredge(wq.glm) # this seems to be taking a long time to run
+#going to try a different way#
+
+Pre1 = subset(Pre, select = c("Tot", "pH_SU", "Sp_Cond","Temp.C","Diss_Oxy"))
+wq.glm = glm.nb(Tot~ ., data = Pre1, na.action = "na.fail" )
+
+wq = dredge(wq.glm1)
+
+
 
 Temperature = glm.nb(Tot ~ Temp.C, data = Pre)
 
@@ -77,30 +88,6 @@ Temp.pred = predict(Temperature, newdata = d0) %>% exp()
 chisq.test(Post$Tot, Temp.pred)
 
 cor.test(Post$Tot, Temp.pred, use = "everything")
-
-
-# dredge package ----------------------------------------------------------
-
-
-wq.glm = glm.nb(Tot~ ., data = Pre, na.action = "na.fail" )
-
-wq = dredge(wq.glm) # this seems to be taking a long time to run
-#going to try a different way#
-
-Pre1 = subset(Pre, select = c("Tot", "pH_SU", "Sp_Cond","Temp.C","Diss_Oxy"))
-wq.glm1 = glm.nb(Tot~ ., data = Pre1, na.action = "na.fail" )
-
-wq1 = dredge(wq.glm1)
-wq1
-#from the above model Temp.C alone is the best but it may change if ,
-#I use the other one#
-
-MWQ1 = subset(MWQ, select = c("Tot", "pH_SU", "Sp_Cond","Temp.C","Diss_Oxy"))
-wq.glm1 = glm.nb(Tot~ ., data = MWQ1, na.action = "na.fail" )
-
-wq1 = dredge(wq.glm1)
-wq1
-
 
 
 # Habitats ----------------------------------------------------------------
@@ -686,39 +673,39 @@ chisq.test(Post$Tot, pH.pred)
 cor.test(Post$Tot, pH.pred, use = "everything")
 
 # GASTROPODA --------------------------------------------------------------
-ARACHNIDA = filter(Macroinvertebrate, Class == "ARACHNIDA")
+GASTROPODA = filter(Macroinvertebrate, Class == "GASTROPODA")
 
-ARACHNIDA = ARACHNIDA %>% group_by(Date, Location, County, Waterbody,Latitude,
+GASTROPODA = GASTROPODA %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
   summarise(Tot = sum(Abundance))
-ARACHNIDA = merge(ARACHNIDA, WaterQuality, by = c("Date", "County",
+GASTROPODA = merge(GASTROPODA, WaterQuality, by = c("Date", "County",
                                                   "Waterbody","Latitude", "Longitude" ))
 
 
-ARACHNIDA$Date = as.Date(ARACHNIDA$Date , format = "%m/%d/%y")
+GASTROPODA$Date = as.Date(GASTROPODA$Date , format = "%m/%d/%y")
 
-ARACHNIDA = as.data.frame(unclass(ARACHNIDA),
+GASTROPODA = as.data.frame(unclass(GASTROPODA),
                           stringsAsFactors = TRUE)
 
-ARACHNIDA$Tot <- as.numeric(ARACHNIDA$Tot)
+GASTROPODA$Tot <- as.numeric(GASTROPODA$Tot)
 
-summary(ARACHNIDA)
+summary(GASTROPODA)
 
 
 
 #Before#
-Pre = ARACHNIDA %>% filter(Date <= '2005-11-24')
+Pre = GASTROPODA %>% filter(Date <= '2005-06-29')
 #After#
-Post = ARACHNIDA %>% filter(Date > '2005-11-24')
+Post = GASTROPODA %>% filter(Date > '2005-06-29')
 
 
 Pre1 = subset(Pre, select = c("Tot", "pH_SU", "Sp_Cond","Temp.C","Diss_Oxy"))
 wq.glm = glm.nb(Tot~ ., data = Pre1, na.action = "na.fail" )
 wq = dredge(wq.glm)
 
-Temperature = glm.nb(Tot ~ Temp.C, data = Pre)
+WQ3 = glm.nb(Tot ~ Temp.C + pH_SU + Sp_Cond, data = Pre)
 
-d0 <- Post %>% dplyr::select(Tot:Temp.C)
+d0 <- Post %>% dplyr::select(Tot,Temp.C,pH_SU)
 
 Temp.pred = predict(Temperature, newdata = d0) %>% exp()
 
@@ -727,7 +714,7 @@ chisq.test(Post$Tot, Temp.pred)
 cor.test(Post$Tot, Temp.pred, use = "everything")
 
 #Lake#
-Lake = filter(ARACHNIDA, Water.Class == "Lake")
+Lake = filter(GASTROPODA, Water.Class == "Lake")
 
 Lake = na.omit(Lake)
 
@@ -757,7 +744,7 @@ cor.test(Post$Tot, DO.pred, use = "everything")
 
 
 #Riverine#
-Riverine = filter(ARACHNIDA, Water.Class == "Riverine")
+Riverine = filter(GASTROPODA, Water.Class == "Riverine")
 
 Riverine = na.omit(Riverine)
 
@@ -786,7 +773,7 @@ cor.test(Post$Tot, Temp.pred, use = "everything")
 
 #Wetland#
 
-Wetland = filter(ARACHNIDA, Water.Class %in% 
+Wetland = filter(GASTROPODA, Water.Class %in% 
                    c("Freshwater Forested/Shrub Wetland", "Freshwater emergent wetland"))
 
 Wetland = na.omit(Wetland)
