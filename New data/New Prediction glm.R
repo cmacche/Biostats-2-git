@@ -10,7 +10,7 @@ library(tidyverse)
   
 # load data -------------------------------------------
 df_wq = read_csv("water_quality.csv")
-df_invert = read_csv("df_invert2.csv")
+df_invert = read_csv("macroinvertebrate2.csv")
 
 
 # format ------------------------------------------------------------------
@@ -41,7 +41,7 @@ df_invert = filter(df_invert, EcoRegion == "P") %>%
 
 
 
-df_invert = df_invert %>% group_by(Date,
+df_invert2 = df_invert %>% group_by(Date,
                                Location,
                                County,
                                Latitude, 
@@ -49,27 +49,27 @@ df_invert = df_invert %>% group_by(Date,
                                Waterbody) %>% 
   summarise(Tot = sum(Abundance))
 
-df_invert = na.omit(df_invert)
-df_invert = as.data.frame(unclass(df_invert), stringsAsFactors = TRUE)
+df_invert2 = na.omit(df_invert)
+df_invert2 = as.data.frame(unclass(df_invert), stringsAsFactors = TRUE)
 
 df_wq = filter(df_wq, EcoRegion == "P") %>% 
   filter(!(Sp_Cond == 0)) %>% 
-  filter(!(ph_SU == 0)) %>% 
+  filter(!(pH_SU == 0)) %>% 
   filter(!(Diss_Oxy == 0)) %>% 
   filter(!(Temp_C == 0))
 df_wq = subset(df_wq, select = c( "Date", "County",
                                                 "Waterbody","Water_Class", 
                                                 "Latitude","Longitude",
                                                 "Drainage", 
-                                                "Temp_C","Sp_Cond", "ph_SU",
+                                                "Temp_C","Sp_Cond", "pH_SU",
                                                 "Diss_Oxy"))
-df_wq = na.omit(df_wq)
+
 
 df_wq = as.data.frame(unclass(df_wq),                    
                              stringsAsFactors = TRUE)
 
 
-df_invertwq = merge(df_invert, df_wq, by = c("Date", "County",
+df_invertwq = merge(df_invert2, df_wq, by = c("Date", "County",
                                         "Waterbody", 
                                         "Latitude","Longitude"))
 
@@ -89,7 +89,7 @@ invertwq_dredge = dredge(invertwq_glm) # this seems to be taking a long time to 
 #going to try a different way#
 
 pre_invertwq = subset(pre_invertwq, 
-                      select = c("Tot", "ph_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
+                      select = c("Tot", "pH_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
 invertwq_glm = glm.nb(Tot~ ., data = pre_invertwq, na.action = "na.fail" )
 
 invertwq_dredge = dredge(invertwq_glm)
@@ -111,7 +111,7 @@ cor.test(post_invertwq$Tot, temp_pred, use = "everything")
 
 #Lake#
 
-df_lake = filter(df_invertwq, Water_Class == "df_lake")
+df_lake = filter(df_invertwq, Water_Class == "Lake")
 
 df_lake = na.omit(df_lake)
 
@@ -121,7 +121,7 @@ pre_lake = df_lake %>% filter(Date <= '2006-08-16')
 
 post_lake = df_lake %>% filter(Date > '2006-08-16')
 
-pre_lake= subset(pre_lake, select = c("Tot", "ph_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
+pre_lake= subset(pre_lake, select = c("Tot", "pH_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
 lake_glm = glm.nb(Tot~ ., data = pre_lake, na.action = "na.fail") 
 
 lake_dredge = dredge(lake_glm)#this is showing none of the waterquality would work but the
@@ -131,7 +131,7 @@ lake_dredge = dredge(lake_glm)#this is showing none of the waterquality would wo
 
 ph_glm_mod = glm.nb(Tot ~ pH_SU, data = pre_invertwq)
 
-d0 <- post_invertwq %>% dplyr::select(Tot,ph_SU)
+d0 <- post_invertwq %>% dplyr::select(Tot,pH_SU)
 
 ph_pred = predict(ph_glm_mod, newdata = d0) %>% exp()
 
@@ -154,10 +154,10 @@ pre_riv =  df_riv %>% filter(Date <= '2005-07-12')
 post_riv = df_riv %>% filter(Date > '2005-07-12')
 
 
-pre_invertwq= subset(pre_riv, select = c("Tot", "ph_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
+pre_riv= subset(pre_riv, select = c("Tot", "pH_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
 riv_glm = glm.nb(Tot~ ., data = pre_riv, na.action = "na.fail") 
 
-riv_dredge = dredge(r.glm)
+riv_dredge = dredge(riv_glm)
 
 temp_glm_mod = glm.nb(Tot ~ Temp_C, data = pre_invertwq)
 
@@ -185,7 +185,7 @@ pre_wet =  df_wet %>% filter(Date <= '2005-07-26')
 post_wet = df_wet %>% filter(Date > '2005-07-26')
 
 
-pre_wet= subset(pre_wet, select = c("Tot", "ph_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
+pre_wet= subset(pre_wet, select = c("Tot", "pH_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
 wet_glm = glm.nb(Tot~ ., data = pre_wet, na.action = "na.fail") 
 
 wet_dredge = dredge(wet_glm) #showed none of the water qualtiy would be best but second best
@@ -227,12 +227,12 @@ df_arach$Tot <- as.numeric(df_arach$Tot)
 
 summary(df_arach)
 
-pre_arach = df_arach %>% filter(Date <= '2005-07-12')
+pre_arach = df_arach %>% filter(Date <= '2005-11-24')
 
-post_arach = df_arach %>% filter(Date > '2005-07-12')
+post_arach = df_arach %>% filter(Date > '2005-11-24')
 
 pre_arach = subset(pre_arach, 
-                      select = c("Tot", "ph_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
+                      select = c("Tot", "pH_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
 arach_glm = glm.nb(Tot~ ., data = pre_arach, na.action = "na.fail" )
 
 arach_dredge = dredge(arach_glm)
@@ -252,17 +252,17 @@ cor.test(post_arach$Tot, temp_pred, use = "everything")
 
 #Lake#
 
-df_lake = filter(df_arach, Water_Class == "df_lake")
+df_lake = filter(df_arach, Water_Class == "Lake")
 
 df_lake = na.omit(df_lake)
 
 summary(df_lake)
 
-pre_lake = df_lake %>% filter(Date <= '2006-08-16')
+pre_lake = df_lake %>% filter(Date <= '2006-08-23')
 
-post_lake = df_lake %>% filter(Date > '2006-08-16')
+post_lake = df_lake %>% filter(Date > '2006-08-23')
 
-pre_lake= subset(pre_lake, select = c("Tot", "ph_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
+pre_lake= subset(pre_lake, select = c("Tot", "pH_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
 lake_glm = glm.nb(Tot~ ., data = pre_lake, na.action = "na.fail") 
 
 lake_dredge = dredge(lake_glm)#this is showing none of the waterquality would work but the
@@ -272,7 +272,7 @@ lake_dredge = dredge(lake_glm)#this is showing none of the waterquality would wo
 
 ph_glm_mod = glm.nb(Tot ~ pH_SU, data = pre_arach)
 
-d0 <- post_arach %>% dplyr::select(Tot,ph_SU)
+d0 <- post_arach %>% dplyr::select(Tot,pH_SU)
 
 ph_pred = predict(ph_glm_mod, newdata = d0) %>% exp()
 
@@ -290,15 +290,15 @@ df_riv = na.omit(df_riv)
 
 summary(df_riv)
 
-pre_riv =  df_riv %>% filter(Date <= '2005-07-12')
+pre_riv =  df_riv %>% filter(Date <= '2006-04-04')
 
-post_riv = df_riv %>% filter(Date > '2005-07-12')
+post_riv = df_riv %>% filter(Date > '2006-04-04')
 
 
-pre_riv= subset(pre_riv, select = c("Tot", "ph_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
+pre_riv= subset(pre_riv, select = c("Tot", "pH_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
 riv_glm = glm.nb(Tot~ ., data = pre_riv, na.action = "na.fail") 
 
-riv_dredge = dredge(r.glm)
+riv_dredge = dredge(riv_glm)
 
 temp_glm_mod = glm.nb(Tot ~ Temp_C, data = pre_riv)
 
@@ -321,26 +321,25 @@ df_wet = na.omit(df_wet)
 
 summary(df_wet)
 
-pre_wet =  df_wet %>% filter(Date <= '2005-07-26')
+pre_wet =  df_wet %>% filter(Date <= '2005-08-11')
 
-post_wet = df_wet %>% filter(Date > '2005-07-26')
+post_wet = df_wet %>% filter(Date > '2005-08-11')
 
 
-pre_wet= subset(pre_wet, select = c("Tot", "ph_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
+pre_wet= subset(pre_wet, select = c("Tot", "pH_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
 wet_glm = glm.nb(Tot~ ., data = pre_wet, na.action = "na.fail") 
 
-wet_dredge = dredge(wet_glm) #showed none of the water qualtiy would be best but second best
-# specfic conductivity#
+wet_dredge = dredge(wet_glm)
 
-spco_glm = glm.nb(Tot ~ Sp_Cond, data = pre_arach)
+ph_glm_mod = glm.nb(Tot ~ pH_SU, data = pre_wet)
 
-d0 <- post_arach %>% dplyr::select(Tot,Sp_Cond)
+d0 <- post_wet %>% dplyr::select(Tot,pH_SU)
 
-spco_pred = predict(spco_glm, newdata = d0) %>% exp()
+ph_pred = predict(ph_glm_mod, newdata = d0) %>% exp()
 
-chisq.test(post_arach$Tot, spco_pred)
+chisq.test(post_wet$Tot, ph_pred)
 
-cor.test(post_arach$Tot, spco_pred, use = "everything")
+cor.test(post_wet$Tot, ph_pred, use = "everything")
 
 # BIVALVIA ----------------------------------------------------------------
 
