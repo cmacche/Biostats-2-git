@@ -10,7 +10,7 @@ library(tidyverse)
   
 # load data -------------------------------------------
 df_wq = read_csv("water_quality.csv")
-df_invert = read_csv("macroinvertebrate2.csv")
+df_invert = read_csv("df_invert2.csv")
 
 
 # format ------------------------------------------------------------------
@@ -209,7 +209,7 @@ cor.test(post_invertwq$Tot, spco_pred, use = "everything")
 # Arachnida ---------------------------------------------------------------
 
 #df_arach#
-df_arach = filter(macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "ARACHNIDA")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -227,39 +227,32 @@ df_arach$Tot <- as.numeric(df_arach$Tot)
 
 summary(df_arach)
 
-pre_invertwq = df_invertwq %>% filter(Date <= '2005-07-12')
+pre_arach = df_arach %>% filter(Date <= '2005-07-12')
 
-post_invertwq = df_invertwq %>% filter(Date > '2005-07-12')
+post_arach = df_arach %>% filter(Date > '2005-07-12')
 
-invertwq_glm = glm.nb(Tot~ ., data = pre_invertwq, na.action = "na.fail" )
-
-invertwq_dredge = dredge(invertwq_glm) # this seems to be taking a long time to run
-#going to try a different way#
-
-pre_invertwq = subset(pre_invertwq, 
+pre_arach = subset(pre_arach, 
                       select = c("Tot", "ph_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
-invertwq_glm = glm.nb(Tot~ ., data = pre_invertwq, na.action = "na.fail" )
+arach_glm = glm.nb(Tot~ ., data = pre_arach, na.action = "na.fail" )
 
-invertwq_dredge = dredge(invertwq_glm)
+arach_dredge = dredge(arach_glm)
 
 
 
-temp_glm_mod = glm.nb(Tot ~ Temp_C, data = pre_invertwq)
+temp_glm_mod = glm.nb(Tot ~ Temp_C, data = pre_arach)
 
-d0 <- post_invertwq %>% dplyr::select(Tot, Temp_C)
+d0 <- post_arach %>% dplyr::select(Tot, Temp_C)
 
 temp_pred = predict(temp_glm_mod, newdata = d0) %>% exp()
 
-chisq.test(post_invertwq$Tot, temp_pred)
+chisq.test(post_arach$Tot, temp_pred)
 
-cor.test(post_invertwq$Tot, temp_pred, use = "everything")
+cor.test(post_arach$Tot, temp_pred, use = "everything")
 
-
-# habitats ----------------------------------------------------------------
 
 #Lake#
 
-df_lake = filter(df_invertwq, Water_Class == "df_lake")
+df_lake = filter(df_arach, Water_Class == "df_lake")
 
 df_lake = na.omit(df_lake)
 
@@ -277,21 +270,21 @@ lake_dredge = dredge(lake_glm)#this is showing none of the waterquality would wo
 
 
 
-ph_glm_mod = glm.nb(Tot ~ pH_SU, data = pre_invertwq)
+ph_glm_mod = glm.nb(Tot ~ pH_SU, data = pre_arach)
 
-d0 <- post_invertwq %>% dplyr::select(Tot,ph_SU)
+d0 <- post_arach %>% dplyr::select(Tot,ph_SU)
 
 ph_pred = predict(ph_glm_mod, newdata = d0) %>% exp()
 
-chisq.test(post_invertwq$Tot, ph_pred)
+chisq.test(post_arach$Tot, ph_pred)
 
-cor.test(post_invertwq$Tot, ph_pred, use = "everything")
+cor.test(post_arach$Tot, ph_pred, use = "everything")
 
 
 
 #riverine#
 
-df_riv = filter(df_invertwq, Water_Class == "Riverine")
+df_riv = filter(df_arach, Water_Class == "Riverine")
 
 df_riv = na.omit(df_riv)
 
@@ -302,25 +295,25 @@ pre_riv =  df_riv %>% filter(Date <= '2005-07-12')
 post_riv = df_riv %>% filter(Date > '2005-07-12')
 
 
-pre_invertwq= subset(pre_riv, select = c("Tot", "ph_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
+pre_riv= subset(pre_riv, select = c("Tot", "ph_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
 riv_glm = glm.nb(Tot~ ., data = pre_riv, na.action = "na.fail") 
 
 riv_dredge = dredge(r.glm)
 
-temp_glm_mod = glm.nb(Tot ~ Temp_C, data = pre_invertwq)
+temp_glm_mod = glm.nb(Tot ~ Temp_C, data = pre_riv)
 
-d0 <- post_invertwq %>% dplyr::select(Tot, Temp_C)
+d0 <- post_riv %>% dplyr::select(Tot, Temp_C)
 
 temp_pred = predict(temp_glm_mod, newdata = d0) %>% exp()
 
-chisq.test(post_invertwq$Tot, temp_pred)
+chisq.test(post_riv$Tot, temp_pred)
 
-cor.test(post_invertwq$Tot, temp_pred, use = "everything")
+cor.test(post_riv$Tot, temp_pred, use = "everything")
 
 
 #wetland#
 
-df_wet = filter(df_invertwq, Water_Class %in% 
+df_wet = filter(df_arach, Water_Class %in% 
                   c("Freshwater Forested/Shrub Wetland", 
                     "Freshwater emergent wetland"))
 
@@ -339,128 +332,19 @@ wet_glm = glm.nb(Tot~ ., data = pre_wet, na.action = "na.fail")
 wet_dredge = dredge(wet_glm) #showed none of the water qualtiy would be best but second best
 # specfic conductivity#
 
-spco_glm = glm.nb(Tot ~ Sp_Cond, data = pre_invertwq)
+spco_glm = glm.nb(Tot ~ Sp_Cond, data = pre_arach)
 
-d0 <- post_invertwq %>% dplyr::select(Tot,Sp_Cond)
+d0 <- post_arach %>% dplyr::select(Tot,Sp_Cond)
 
 spco_pred = predict(spco_glm, newdata = d0) %>% exp()
 
-chisq.test(post_invertwq$Tot, spco_pred)
+chisq.test(post_arach$Tot, spco_pred)
 
-cor.test(post_invertwq$Tot, spco_pred, use = "everything")
-
-
-
-#Before#
-pre_invertwq = df_arach %>% filter(Date <= '2005-11-24')
-#After#
-post_invertwq = df_arach %>% filter(Date > '2005-11-24')
-
-
-pre_invertwq1 = subset(pre_invertwq, select = c("Tot", "ph_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
-wq.glm = glm.nb(Tot~ ., data = pre_invertwq1, na.action = "na.fail" )
-wq = dredge(wq.glm)
-
-Temperature = glm.nb(Tot ~ Temp_C, data = pre_invertwq)
-
-d0 <- post_invertwq %>% dplyr::select(Tot:Temp_C)
-
-Temp_pred = predict(Temperature, newdata = d0) %>% exp()
-
-chisq.test(post_invertwq$Tot, Temp_pred)
-
-cor.test(post_invertwq$Tot, Temp_pred, use = "everything")
-
-#df_lake#
-df_lake = filter(df_arach, Water_Class == "df_lake")
-
-df_lake = na.omit(df_lake)
-
-summary(df_lake)
-
-pre_invertwq = df_lake %>% filter(Date <= '2006-08-23')
-
-post_invertwq = df_lake %>% filter(Date > '2006-08-23')
-
-pre_invertwq= subset(pre_invertwq, select = c("Tot", "ph_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
-l.glm = glm.nb(Tot~ ., data = pre_invertwq, na.action = "na.fail") 
-
-l = dredge(l.glm)#this is showing none of the waterquality would work but the
-#next best is ph so will try that#
-
-
-
-DO = glm.nb(Tot ~ Diss_Oxy, data = pre_invertwq)
-
-d0 <- post_invertwq %>% dplyr::select(Tot,Diss_Oxy)
-
-DO_pred = predict(DO, newdata = d0) %>% exp()
-
-chisq.test(post_invertwq$Tot, DO_pred)
-
-cor.test(post_invertwq$Tot, DO_pred, use = "everything")
-
-
-#df_riv#
-df_riv = filter(df_arach, Water_Class == "df_riv")
-
-df_riv = na.omit(df_riv)
-
-summary(df_riv)
-
-pre_invertwq =  df_riv %>% filter(Date <= '2006-04-04')
-
-post_invertwq = df_riv %>% filter(Date > '2006-04-04')
-
-
-pre_invertwq= subset(pre_invertwq, select = c("Tot", "ph_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
-r.glm = glm.nb(Tot~ ., data = pre_invertwq, na.action = "na.fail") 
-
-r = dredge(r.glm)
-
-Temperature = glm.nb(Tot ~ Temp_C, data = pre_invertwq)
-
-d0 <- post_invertwq %>% dplyr::select(Tot:Temp_C)
-
-Temp_pred = predict(Temperature, newdata = d0) %>% exp()
-
-chisq.test(post_invertwq$Tot, Temp_pred)
-
-cor.test(post_invertwq$Tot, Temp_pred, use = "everything")
-
-
-#df_wet#
-
-df_wet = filter(df_arach, Water_Class %in% 
-                   c("Freshwater Forested/Shrub df_wet", "Freshwater emergent wetland"))
-
-df_wet = na.omit(df_wet)
-
-summary(df_wet)
-
-pre_invertwq =  df_wet %>% filter(Date <= '2005-08-11')
-
-post_invertwq = df_wet %>% filter(Date > '2005-08-11')
-
-
-pre_invertwq= subset(pre_invertwq, select = c("Tot", "ph_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
-w.glm = glm.nb(Tot~ ., data = pre_invertwq, na.action = "na.fail") 
-
-w = dredge(w.glm) #showed ph as best
-
-ph = glm.nb(Tot ~ ph_SU, data = pre_invertwq)
-
-d0 <- post_invertwq %>% dplyr::select(Tot,ph_SU)
-
-ph_pred = predict(ph, newdata = d0) %>% exp()
-
-chisq.test(post_invertwq$Tot, ph_pred)
-
-cor.test(post_invertwq$Tot, ph_pred, use = "everything")
+cor.test(post_arach$Tot, spco_pred, use = "everything")
 
 # BIVALVIA ----------------------------------------------------------------
 
-BIVALVIA = filter(Macroinvertebrate, Class == "BIVALVIA")
+BIVALVIA = filter(df_invert, Class == "BIVALVIA")
 
 BIVALVIA = BIVALVIA %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -588,7 +472,7 @@ chisq.test(post_invertwq$Tot, DO_pred)
 
 cor.test(post_invertwq$Tot, DO_pred, use = "everything")
 # CLITELLATA --------------------------------------------------------------
-CLITELLATA = filter(Macroinvertebrate, Class == "CLITELLATA")
+CLITELLATA = filter(df_invert, Class == "CLITELLATA")
 
 CLITELLATA = CLITELLATA %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -716,7 +600,7 @@ chisq.test(post_invertwq$Tot, SC_pred)
 
 cor.test(post_invertwq$Tot, SC_pred, use = "everything")
 # ENOPLA  -----------------------------------------------------------------
-ENOPLA = filter(Macroinvertebrate, Class == "ENOPLA")
+ENOPLA = filter(df_invert, Class == "ENOPLA")
 
 ENOPLA = ENOPLA %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -814,7 +698,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # GASTROPODA --------------------------------------------------------------
-GASTROPODA = filter(Macroinvertebrate, Class == "GASTROPODA")
+GASTROPODA = filter(df_invert, Class == "GASTROPODA")
 
 GASTROPODA = GASTROPODA %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -914,7 +798,7 @@ chisq.test(post_invertwq$Tot, Temp_pred)
 cor.test(post_invertwq$Tot, Temp_pred, use = "everything")
 
 # INSECTA -----------------------------------------------------------------
-INSECTA = filter(Macroinvertebrate, Class == "INSECTA")
+INSECTA = filter(df_invert, Class == "INSECTA")
 
 INSECTA = INSECTA %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -1024,7 +908,7 @@ w = dredge(w.glm) #showed none of the water qualtiy would be best but second bes
 
 
 # MAXILLOPODA -------------------------------------------------------------
-MAXILLOPODA = filter(Macroinvertebrate, Class == "MAXILLOPODA")
+MAXILLOPODA = filter(df_invert, Class == "MAXILLOPODA")
 
 MAXILLOPODA = MAXILLOPODA %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -1154,7 +1038,7 @@ cor.test(post_invertwq$Tot, WQ2_pred, use = "everything")
 
 # TURBELLARIA -------------------------------------------------------------
 
-TURBELLARIA = filter(Macroinvertebrate, Class == "TURBELLARIA")
+TURBELLARIA = filter(df_invert, Class == "TURBELLARIA")
 
 TURBELLARIA = TURBELLARIA %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -1261,7 +1145,7 @@ cor.test(post_invertwq$Tot, DO_pred, use = "everything")
 
 #order#
 # AMPHIPODA ---------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -1391,7 +1275,7 @@ cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # ARCHITAENIOGLOSSA -------------------------------------------------------
 
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -1519,7 +1403,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 # ARHYNCHOBDELLIDA --------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -1649,7 +1533,7 @@ cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # BASOMMATOPHORA ----------------------------------------------------------
 
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -1777,7 +1661,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 # BRANCHIOBDELLIDA --------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -1906,7 +1790,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # COLEOPTERA --------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -2035,7 +1919,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # DECAPODA ----------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -2164,7 +2048,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # DIPTERA -----------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -2293,7 +2177,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # EPHEMEROPTERA -----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -2422,7 +2306,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # HAPLOTAXIDA -------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -2551,7 +2435,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # HEMIPTERA ---------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -2680,7 +2564,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # HOPLONEMERTEA -----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -2809,7 +2693,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # ISOPODA -----------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -2938,7 +2822,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # LEPIDOPTERA -------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -3067,7 +2951,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # LUMBRICULIDA ------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -3196,7 +3080,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # MEGALOPTERA -------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -3325,7 +3209,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # NEOTAENIOGLOSSA ---------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -3454,7 +3338,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # NEUROPTERA --------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -3583,7 +3467,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # ODONATA -----------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -3712,7 +3596,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # OPISTHOPORA -------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -3841,7 +3725,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # OTHER_TAXA --------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -3970,7 +3854,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # PLECOPTERA --------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -4099,7 +3983,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # RHYNCHOBDELLIDA ---------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -4228,7 +4112,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # TRICHOPTERA -------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -4357,7 +4241,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # TRICLADIDA --------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -4486,7 +4370,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # TROMBIDIFORMES ----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -4615,7 +4499,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # UNIONIDA ----------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -4744,7 +4628,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # VENEROIDA ---------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -4876,7 +4760,7 @@ cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 #Family#
 
 # Aeshnidae ---------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -5005,7 +4889,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Ameletidae --------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -5134,7 +5018,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Ancylidae ---------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -5263,7 +5147,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Asellidae ---------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -5392,7 +5276,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Athericidae -------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -5521,7 +5405,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Baetidae ----------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -5650,7 +5534,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Baetiscidae -------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -5779,7 +5663,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Belostomatidae ----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -5909,7 +5793,7 @@ cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 
 # Brachycentridae ---------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -6038,7 +5922,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Branchiobdellidae -------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -6167,7 +6051,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Caenidae ----------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -6296,7 +6180,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Calamoceratidae ---------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -6425,7 +6309,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Calopterygidae ----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -6554,7 +6438,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Cambaridae --------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -6683,7 +6567,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Capniidae ---------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -6812,7 +6696,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Ceratopogonidae ---------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -6941,7 +6825,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Chaoboridae -------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -7070,7 +6954,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Chironomidae ------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -7199,7 +7083,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Chloroperlidae ----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -7328,7 +7212,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Coenagrionidae ----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -7457,7 +7341,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Corbiculidae ------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -7586,7 +7470,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Cordelegastridae  -------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -7715,7 +7599,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Cordulegastridae --------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -7844,7 +7728,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Corduliidae -------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -7973,7 +7857,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Corixidae ---------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -8102,7 +7986,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Corydalidae -------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -8231,7 +8115,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Crambidae ---------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -8360,7 +8244,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Crangonyctidae ----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -8489,7 +8373,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Culicidae ---------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -8618,7 +8502,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Dipseudopsidae ----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -8747,7 +8631,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Dixidae -----------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -8877,7 +8761,7 @@ cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 
 # Dryopidae ---------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -9006,7 +8890,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Dugesiidae --------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -9135,7 +9019,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Dytiscidae --------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -9264,7 +9148,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Elmidae -----------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -9393,7 +9277,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Empididae ---------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -9522,7 +9406,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Enchytraeidae -----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -9651,7 +9535,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Ephemerellidae ----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -9780,7 +9664,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Ephemeridae -------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -9909,7 +9793,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Erpobdellidae -----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -10038,7 +9922,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Gammaridae --------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -10167,7 +10051,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Gerridae ----------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -10296,7 +10180,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Glossiphoniidae ---------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -10425,7 +10309,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Glossosomatidae ---------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -10554,7 +10438,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Gomphidae ---------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -10683,7 +10567,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Gyrinidae ---------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -10812,7 +10696,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Haliplidae --------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -10941,7 +10825,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Hyalellidae -------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -11070,7 +10954,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Hydrachnidae ------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -11199,7 +11083,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Hydrobiidae -------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -11328,7 +11212,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Hydrochidae -------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -11457,7 +11341,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Hydrometridae -----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -11586,7 +11470,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Hydrophilidae -----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -11715,7 +11599,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Hydropsychidae ----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -11844,7 +11728,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Hydroptilidae -----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -11973,7 +11857,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Isonychiidae ------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -12102,7 +11986,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Lepidostomatidae --------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -12231,7 +12115,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Leptoceridae ------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -12360,7 +12244,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Leptohyphidae -----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -12489,7 +12373,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Leptophlebiidae ---------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -12618,7 +12502,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Leuctridae --------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -12747,7 +12631,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Libellulidae ------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -12876,7 +12760,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Limnephilidae -----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -13005,7 +12889,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Limoniidae --------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -13134,7 +13018,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Lumbriculidae -----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -13263,7 +13147,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Lymnaeidae --------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -13392,7 +13276,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Metretopodidae ----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -13521,7 +13405,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Molannidae --------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -13650,7 +13534,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Naididae ----------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -13779,7 +13663,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Nemouridae --------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -13908,7 +13792,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Neoephemeridae ----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -14037,7 +13921,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Nepidae -----------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -14166,7 +14050,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Noteridae ---------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -14295,7 +14179,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Nymphalidae/Limoniidae --------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -14424,7 +14308,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Odontoceridae -----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -14553,7 +14437,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Palaemonidae ------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -14682,7 +14566,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Pediciidae --------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -14811,7 +14695,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Peltoperlidae -----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -14940,7 +14824,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Perlidae ----------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -15069,7 +14953,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Perlodidae --------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -15198,7 +15082,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Philopotamidae ----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -15327,7 +15211,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Phryganeidae ------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -15456,7 +15340,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Physidae ----------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -15585,7 +15469,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Pisidiidae --------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -15714,7 +15598,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Planariidae -------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -15843,7 +15727,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Planorbidae -------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -15972,7 +15856,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Pleuroceridae -----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -16101,7 +15985,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Polycentropodidae -------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -16230,7 +16114,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Polymitarcyidae ---------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -16359,7 +16243,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Potamanthidae -----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -16488,7 +16372,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Psephenidae -------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -16617,7 +16501,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Psychodidae -------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -16746,7 +16630,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Psychomyiidae -----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -16875,7 +16759,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Pteronarcyidae ----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -17004,7 +16888,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Ptilodactylidae ---------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -17133,7 +17017,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Ptilodactylidae ---------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -17262,7 +17146,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Pyralidae ---------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -17391,7 +17275,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Rhyacophilidae ----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -17520,7 +17404,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Scirtidae ---------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -17649,7 +17533,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Sialidae ----------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -17778,7 +17662,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Simuliidae --------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -17907,7 +17791,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Siphlonuridae -----------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -18036,7 +17920,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Sisyridae ---------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -18165,7 +18049,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Tabanidae ---------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -18294,7 +18178,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Taeniopterygidae --------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -18423,7 +18307,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Tanyderidae -------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -18552,7 +18436,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Tetrastemmatidae --------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -18681,7 +18565,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Tipulidae ---------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -18810,7 +18694,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Tubificidae -------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -18939,7 +18823,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Uenoidae ----------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -19068,7 +18952,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Unionidae ---------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
@@ -19197,7 +19081,7 @@ chisq.test(post_invertwq$Tot, ph_pred)
 cor.test(post_invertwq$Tot, ph_pred, use = "everything")
 
 # Viviparidae -------------------------------------------------------------
-df_arach = filter(Macroinvertebrate, Class == "df_arach")
+df_arach = filter(df_invert, Class == "df_arach")
 
 df_arach = df_arach %>% group_by(Date, Location, County, Waterbody,Latitude,
                                    Longitude) %>% 
