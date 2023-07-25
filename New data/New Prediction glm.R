@@ -9,8 +9,8 @@ library(MuMIn)
 library(tidyverse)
   
 # load data -------------------------------------------
-df_wq = read_csv("water_quality.csv")
-df_invert = read_csv("macroinvertebrate2.csv")
+df_wq = read_csv("data_raw/water_quality.csv")
+df_invert = read_csv("data_raw/macroinvertebrate2.csv")
 
 
 # format ------------------------------------------------------------------
@@ -49,8 +49,8 @@ df_invert2 = df_invert %>% group_by(Date,
                                Waterbody) %>% 
   summarise(Tot = sum(Abundance))
 
-df_invert2 = na.omit(df_invert)
-df_invert2 = as.data.frame(unclass(df_invert), stringsAsFactors = TRUE)
+df_invert2 = na.omit(df_invert2)
+df_invert2 = as.data.frame(unclass(df_invert2), stringsAsFactors = TRUE)
 
 df_wq = filter(df_wq, EcoRegion == "P") %>% 
   filter(!(Sp_Cond == 0)) %>% 
@@ -76,25 +76,16 @@ df_invertwq = merge(df_invert2, df_wq, by = c("Date", "County",
 df_invertwq$Date <- as.Date(df_invertwq$Date , format = "%m/%d/%y")
 
 
-summary(df_invertwq) #this is to find the median so I can split the data as evenly as,
-#possible to create a test model.
+pre_invertwq = df_invertwq %>% filter(Date <= median(df_invertwq$Date))
 
-pre_invertwq = df_invertwq %>% filter(Date <= '2005-07-12')
+post_invertwq = df_invertwq %>% filter(Date > median(df_invertwq$Date))
 
-post_invertwq = df_invertwq %>% filter(Date > '2005-07-12')
-
-invertwq_glm = glm.nb(Tot~ ., data = pre_invertwq, na.action = "na.fail" )
-
-invertwq_dredge = dredge(invertwq_glm) # this seems to be taking a long time to run
-#going to try a different way#
 
 pre_invertwq = subset(pre_invertwq, 
                       select = c("Tot", "pH_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
 invertwq_glm = glm.nb(Tot~ ., data = pre_invertwq, na.action = "na.fail" )
 
 invertwq_dredge = dredge(invertwq_glm)
-
-
 
 temp_glm_mod = glm.nb(Tot ~ Temp_C, data = pre_invertwq)
 
@@ -109,35 +100,39 @@ cor.test(post_invertwq$Tot, temp_pred, use = "everything")
 
 # habitats ----------------------------------------------------------------
 
+
 #Lake#
 
 df_lake = filter(df_invertwq, Water_Class == "Lake")
 
 df_lake = na.omit(df_lake)
 
-summary(df_lake)
-
-pre_lake = df_lake %>% filter(Date <= '2006-08-16')
-
-post_lake = df_lake %>% filter(Date > '2006-08-16')
-
-pre_lake= subset(pre_lake, select = c("Tot", "pH_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
-lake_glm = glm.nb(Tot~ ., data = pre_lake, na.action = "na.fail") 
-
-lake_dredge = dredge(lake_glm)#this is showing none of the waterquality would work but the
-#next best is ph so will try that#
 
 
+pre_lake = df_lake %>% filter(Date <= median(df_lake$Date))
 
-ph_glm_mod = glm.nb(Tot ~ pH_SU, data = pre_invertwq)
+post_lake = df_lake %>% filter(Date > median(df_lake$Date))
 
-d0 <- post_invertwq %>% dplyr::select(Tot,pH_SU)
+
+pre_lake = subset(pre_lake, 
+                      select = c("Tot", "pH_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
+lake_glm = glm.nb(Tot~ ., data = pre_lake, na.action = "na.fail" )
+
+lake_dredge = dredge(lake_glm) # in this case the best model shows
+#none of the variables are the best model, going with the second best
+
+
+
+
+ph_glm_mod = glm.nb(Tot ~ pH_SU, data = pre_lake)
+
+d0 <- post_lake %>% dplyr::select(Tot,pH_SU)
 
 ph_pred = predict(ph_glm_mod, newdata = d0) %>% exp()
 
-chisq.test(post_invertwq$Tot, ph_pred)
+chisq.test(post_lake$Tot, ph_pred)
 
-cor.test(post_invertwq$Tot, ph_pred, use = "everything")
+cor.test(post_lake$Tot, ph_pred, use = "everything")
 
 
 
@@ -147,11 +142,9 @@ df_riv = filter(df_invertwq, Water_Class == "Riverine")
 
 df_riv = na.omit(df_riv)
 
-summary(df_riv)
+pre_riv =  df_riv %>% filter(Date <= median(df_riv$Date))
 
-pre_riv =  df_riv %>% filter(Date <= '2005-07-12')
-
-post_riv = df_riv %>% filter(Date > '2005-07-12')
+post_riv = df_riv %>% filter(Date > median(df_riv$Date))
 
 
 pre_riv= subset(pre_riv, select = c("Tot", "pH_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
@@ -159,15 +152,15 @@ riv_glm = glm.nb(Tot~ ., data = pre_riv, na.action = "na.fail")
 
 riv_dredge = dredge(riv_glm)
 
-temp_glm_mod = glm.nb(Tot ~ Temp_C, data = pre_invertwq)
+temp_glm_mod = glm.nb(Tot ~ Temp_C, data = pre_riv)
 
-d0 <- post_invertwq %>% dplyr::select(Tot, Temp_C)
+d0 <- post_riv %>% dplyr::select(Tot, Temp_C)
 
 temp_pred = predict(temp_glm_mod, newdata = d0) %>% exp()
 
-chisq.test(post_invertwq$Tot, temp_pred)
+chisq.test(post_riv$Tot, temp_pred)
 
-cor.test(post_invertwq$Tot, temp_pred, use = "everything")
+cor.test(post_riv$Tot, temp_pred, use = "everything")
 
 
 #wetland#
@@ -178,11 +171,9 @@ df_wet = filter(df_invertwq, Water_Class %in%
 
 df_wet = na.omit(df_wet)
 
-summary(df_wet)
+pre_wet =  df_wet %>% filter(Date <= median(df_wet$Date))
 
-pre_wet =  df_wet %>% filter(Date <= '2005-07-26')
-
-post_wet = df_wet %>% filter(Date > '2005-07-26')
+post_wet = df_wet %>% filter(Date > median(df_wet$Date))
 
 
 pre_wet= subset(pre_wet, select = c("Tot", "pH_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
@@ -227,9 +218,9 @@ df_arach$Tot <- as.numeric(df_arach$Tot)
 
 summary(df_arach)
 
-pre_arach = df_arach %>% filter(Date <= '2005-11-24')
+pre_arach = df_arach %>% filter(Date <= median(df_arach$Date))
 
-post_arach = df_arach %>% filter(Date > '2005-11-24')
+post_arach = df_arach %>% filter(Date > median(df_arach$Date))
 
 pre_arach = subset(pre_arach, 
                       select = c("Tot", "pH_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
@@ -256,11 +247,10 @@ df_lake = filter(df_arach, Water_Class == "Lake")
 
 df_lake = na.omit(df_lake)
 
-summary(df_lake)
 
-pre_lake = df_lake %>% filter(Date <= '2006-08-23')
+pre_lake = df_lake %>% filter(Date <= median(df_lake$Date))
 
-post_lake = df_lake %>% filter(Date > '2006-08-23')
+post_lake = df_lake %>% filter(Date > median(df_lake$Date))
 
 pre_lake= subset(pre_lake, select = c("Tot", "pH_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
 lake_glm = glm.nb(Tot~ ., data = pre_lake, na.action = "na.fail") 
@@ -270,15 +260,15 @@ lake_dredge = dredge(lake_glm)#this is showing none of the waterquality would wo
 
 
 
-ph_glm_mod = glm.nb(Tot ~ pH_SU, data = pre_arach)
+diss_glm_mod = glm.nb(Tot ~ Diss_Oxy, data = pre_lake)
 
-d0 <- post_arach %>% dplyr::select(Tot,pH_SU)
+d0 <- post_lake %>% dplyr::select(Tot,Diss_Oxy)
 
-ph_pred = predict(ph_glm_mod, newdata = d0) %>% exp()
+diss_pred = predict(diss_glm_mod, newdata = d0) %>% exp()
 
-chisq.test(post_arach$Tot, ph_pred)
+chisq.test(post_lake$Tot, diss_pred)
 
-cor.test(post_arach$Tot, ph_pred, use = "everything")
+cor.test(post_lake$Tot, diss_pred, use = "everything")
 
 
 
@@ -288,11 +278,9 @@ df_riv = filter(df_arach, Water_Class == "Riverine")
 
 df_riv = na.omit(df_riv)
 
-summary(df_riv)
+pre_riv =  df_riv %>% filter(Date <= median(df_riv$Date))
 
-pre_riv =  df_riv %>% filter(Date <= '2006-04-04')
-
-post_riv = df_riv %>% filter(Date > '2006-04-04')
+post_riv = df_riv %>% filter(Date > median(df_riv$Date))
 
 
 pre_riv= subset(pre_riv, select = c("Tot", "pH_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
@@ -319,11 +307,10 @@ df_wet = filter(df_arach, Water_Class %in%
 
 df_wet = na.omit(df_wet)
 
-summary(df_wet)
 
-pre_wet =  df_wet %>% filter(Date <= '2005-08-11')
+pre_wet =  df_wet %>% filter(Date <= median(df_wet$Date))
 
-post_wet = df_wet %>% filter(Date > '2005-08-11')
+post_wet = df_wet %>% filter(Date > median(df_wet$Date))
 
 
 pre_wet= subset(pre_wet, select = c("Tot", "pH_SU", "Sp_Cond","Temp_C","Diss_Oxy"))
